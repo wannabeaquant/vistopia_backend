@@ -72,13 +72,8 @@ def search_transport(payload: TransportRequest):
     if not all_options:
         raise HTTPException(status_code=404, detail="No routes found")
     
-    # Find cheapest options
-    sorted_options = sorted(all_options, key=lambda x: x["price"])
-    cheapest_price = sorted_options[0]["price"]
-    cheapest = [opt for opt in sorted_options if opt["price"] == cheapest_price]
-    
-    # Add placeholder IDs for response
-    return [{"id": idx, **opt} for idx, opt in enumerate(cheapest)]
+    return [{"id": idx, **opt} for idx, opt in enumerate(all_options)]
+
 
 
 class AccommodationRequest(BaseModel):

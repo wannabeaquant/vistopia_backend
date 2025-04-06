@@ -11,7 +11,6 @@ EXCLUDED_KEYWORDS = ["flat", "pg"]
 
 GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 
-# Add new function for transport routes
 def get_transport_routes(origin: str, destination: str, mode: str):
     DIRECTIONS_URL = "https://maps.googleapis.com/maps/api/directions/json"
     params = {
@@ -21,31 +20,49 @@ def get_transport_routes(origin: str, destination: str, mode: str):
         "key": API_KEY,
         "alternatives": "true"
     }
+
+    if mode == "transit":
+        params["departure_time"] = "now"
+
+    logger.info(f"Requesting directions: {origin} -> {destination} | Mode: {mode}")
     response = requests.get(DIRECTIONS_URL, params=params)
     data = response.json()
-    if data["status"] != "OK":
+
+    # 💬 Log the raw status and available routes count
+    logger.info(f"[{mode.upper()}] Status: {data.get('status')} | Num routes: {len(data.get('routes', []))}")
+
+    if data.get("status") != "OK":
+        logger.error(f"[{mode.upper()}] Google API error: {data.get('status')} - {data.get('error_message', 'No error message')}")
         return []
-    
+
     routes = []
     for route in data.get("routes", []):
-        leg = route["legs"][0]
-        distance_km = leg["distance"]["value"] / 1000
-        duration = leg["duration"]["text"]
-        
-        # Estimate cost based on mode
-        if mode == "driving":
-            price = distance_km * 0.5  # $0.50 per km
-        elif mode == "transit":
-            price = 3.0  # Default fare
-        else:
-            price = 0.0  # Walking/bicycling
-        routes.append({
-            "transport_type": mode,
-            "duration": duration,
-            "distance": distance_km,
-            "price": price
-        })
+        try:
+            leg = route["legs"][0]
+            distance_km = leg["distance"]["value"] / 1000
+            duration = leg["duration"]["text"]
+
+            if mode == "driving":
+                price = distance_km * 0.5
+            elif mode == "transit":
+                price = 3.0
+            else:
+                price = 0.0
+
+            routes.append({
+                "transport_type": mode,
+                "duration": duration,
+                "distance": distance_km,
+                "price": price
+            })
+        except Exception as e:
+            logger.exception(f"[{mode.upper()}] Failed to parse route leg: {e}")
+            continue
+
+    logger.info(f"[{mode.upper()}] Parsed routes: {len(routes)}")
     return routes
+
+
 
 def geocode_location(location_str):
     params = {
