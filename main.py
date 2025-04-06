@@ -93,11 +93,18 @@ def search_accommodation(payload: AccommodationRequest):
     
     # Fetch nearby housing from Google Places API
     places = get_nearby_housing(lat, lng)
+    print("Total places fetched:", len(places))  # DEBUG
+
+    # Print all names and their prices
+    for place in places:
+        print(f"{place['name']} - price: {place.get('price')}")  # DEBUG
+
     if not places:
         raise HTTPException(status_code=404, detail="No accommodations found")
     
     # Filter by price_level (budget)
-    filtered = [p for p in places if p.get("price", 4) <= payload.budget]
+    filtered = places
+    print("Filtered (within budget) places:", len(filtered))  # DEBUG
     
     # Map to AccommodationResponse schema
     results = []
@@ -106,10 +113,11 @@ def search_accommodation(payload: AccommodationRequest):
             "id": place["place_id"],
             "name": place["name"],
             "location": place["address"],
-            "price": place.get("price", 0),
+            "price": place.get("price") or 0, 
             "rating": place.get("rating")
         })
     return results
+
 
 @app.post("/transport_options/", response_model=TransportOptionResponse)
 def create_transport_option(

@@ -81,7 +81,8 @@ def get_nearby_housing(lat, lng, keyword=None, radius=3000, max_results=60):
     """
     Fetches up to `max_results` places from Google Places API using pagination.
     """
-    default_keywords = "hostel|pg|student housing"
+    default_keywords = "hotel|resort|lodge|guest house|homestay|airbnb|oyo|hostel"
+
     keyword = f"{default_keywords}|{keyword}" if keyword else default_keywords  
 
     params = {
