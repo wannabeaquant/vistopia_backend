@@ -29,6 +29,10 @@ app.add_middleware(
 # Create DB tables
 Base.metadata.create_all(bind=engine)
 
+@app.get("/")
+def root():
+    return {"msg": "healthy server"}
+
 @app.post("/signup/", response_model=UserResponse)
 def signup(user: UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.username == user.username).first()
